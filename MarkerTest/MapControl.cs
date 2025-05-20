@@ -20,10 +20,8 @@ namespace MarkerTest
         {
             this.App = app;
 
-            this.App.MapProvider = GMapProviders.OpenStreetMap;
-            //this.App.MapProvider = GMapProviders.GoogleKoreaSatelliteMap;
-
-
+            //this.App.MapProvider = GMapProviders.OpenStreetMap;
+            this.App.MapProvider = GMapProviders.GoogleKoreaSatelliteMap;
 
             this.App.MaxZoom = 20;
             this.App.MinZoom = 6;
@@ -43,19 +41,24 @@ namespace MarkerTest
 
         public void SetPointSave(double lat, double lng)
         {
-
             this.App.Position = new PointLatLng(showLat, showLng);
         }
 
+        /// <summary>
+        /// 위/경도 표시 레이블 세팅 
+        /// </summary>
+        /// <returns></returns>
         public Label ShowLatLngLabel()
         {
             Label label = new Label();
             label.BackColor = Color.Transparent;
-            label.Text = $"{showLat} : {showLng}";
             label.Location = new Point(10, 10);
             label.AutoSize = true;
             label.Font = new Font("Arial", 12, FontStyle.Bold);
             label.ForeColor = Color.White;
+
+            label.Text = $"{showLat} : {showLng}";
+
             return label;
         }
     }

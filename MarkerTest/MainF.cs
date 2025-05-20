@@ -28,27 +28,8 @@ namespace MarkerTest
             map.App.OnMapZoomChanged += OnMapZoomChanged;
             map.App.OnPositionChanged += OnPositionChanged;
 
-            dynLabel = new Label();
-            //map.App.Controls.Add(dynLabel = map.ShowLatLngLabel());
-
-            map.App.Controls.Add(dynLabel = new Label());
-
-            dynLabel.BackColor = Color.Transparent;
-            //dynLabel.Text = string.Empty;
-            dynLabel.Text = $"{map.showLat} : {map.showLng}";
-            dynLabel.Location = new Point(10, 10);
-            dynLabel.AutoSize = true;
-            //dynLabel.Size = new Size();
-        }
-
-        private Label ShowLatLngLabel()
-        {
-            Label label = new Label();
-            label.BackColor = Color.Transparent;
-            label.Text = $"{map.showLat} : {map.showLng}";
-            label.Location = new Point(10, 10);
-            label.AutoSize = true;
-            return label;
+            // 위/경도 표시 레이블 추가
+            map.App.Controls.Add(dynLabel = map.ShowLatLngLabel());
         }
 
         private void OnMapZoomChanged()
