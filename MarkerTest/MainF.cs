@@ -17,9 +17,9 @@ namespace MarkerTest
             {
                 if (map != null)
                 {
-                    // Á¤¸®ÀÇ ½Ã°£ÀÌ ÇÊ¿ä ÇÏ´Ï±î
-                    // ±×·±µ¥ ±¸Áö ÇÊ¿ä ÇÒ±î³ª?
-                    // ÆÇ´ÜÀÌ ¾ÈµÇ³×. . . 
+                    // ì •ë¦¬ì˜ ì‹œê°„ì´ í•„ìš” í•˜ë‹ˆê¹Œ
+                    // ê·¸ëŸ°ë° êµ¬ì§€ í•„ìš” í• ê¹Œë‚˜?
+                    // íŒë‹¨ì´ ì•ˆë˜ë„¤. . . 
 
                     ShowCloseMessage();
                     map.App.Dispose();
@@ -36,13 +36,13 @@ namespace MarkerTest
             map.App.OnMapZoomChanged += OnMapZoomChanged;
             map.App.OnPositionChanged += OnPositionChanged;
 
-            // À§/°æµµ Ç¥½Ã ·¹ÀÌºí Ãß°¡
-            // À§/°æµµ Ç¥½Ã ·¹ÀÌºí Ãß°¡
+            // ìœ„/ê²½ë„ í‘œì‹œ ë ˆì´ë¸” ì¶”ê°€
+            // ìœ„/ê²½ë„ í‘œì‹œ ë ˆì´ë¸” ì¶”ê°€
             map.App.Controls.Add(dynLabel = map.ShowLatLngLabel());
         }
 
         /// <summary>
-        /// Á¾·á ¸Ş¼¼Áö ÀÌ±ä ÇÑµ¥ »ç¿ëÇÒÁö ¸ğ¸£°ÚÀ½
+        /// ì¢…ë£Œ ë©”ì„¸ì§€ ì´ê¸´ í•œë° ì‚¬ìš©í• ì§€ ëª¨ë¥´ê² ìŒ
         /// </summary>
         private void ShowCloseMessage()
         {
