@@ -28,12 +28,6 @@ namespace MarkerTest
 
             InitializeComponent();
 
-            //GMapControl gMapCtrl = new GMapControl();
-            //gMapCtrl.Dock = DockStyle.Fill;
-            //this.Controls.Add(gMapCtrl);
-
-            //map = new MapControl(gMapCtrl);
-
             map = new MapControl(new GMapControl());
 
             map.App.Dock = DockStyle.Fill;
@@ -42,11 +36,14 @@ namespace MarkerTest
             map.App.OnMapZoomChanged += OnMapZoomChanged;
             map.App.OnPositionChanged += OnPositionChanged;
 
-
+            // 위/경도 표시 레이블 추가
             // 위/경도 표시 레이블 추가
             map.App.Controls.Add(dynLabel = map.ShowLatLngLabel());
         }
 
+        /// <summary>
+        /// 종료 메세지 이긴 한데 사용할지 모르겠음
+        /// </summary>
         private void ShowCloseMessage()
         {
             Form closeMessageBoxF = new Form();
@@ -63,9 +60,10 @@ namespace MarkerTest
             closeMessageBoxF.ShowDialog();
 
         }
+
         private void OnMapZoomChanged()
         {
-            map.MovePoint(map.showLat, map.showLng);
+            map.App.Position = new PointLatLng(map.showLat, map.showLng);
             dynLabel.Text = $"{map.showLat}:{map.showLng}";
         }
 
