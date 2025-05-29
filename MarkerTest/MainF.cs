@@ -30,16 +30,15 @@ namespace MarkerTest
             map.App.OnPositionChanged += OnPositionChanged;
 
             // 위/경도 표시 레이블 추가
-            // 위/경도 표시 레이블 추가
             map.App.Controls.Add(dynLabel = map.ShowLatLngLabel());
 
-            //36°07'14"N 125°58'24"E
-            // 범위 원 그리기
-            for (int i = 1; i < 5; i++)
+            // 미터 단위로 원 그리기
+            double[] distances = { 8000, 16000, 24000, 30000 };
+
+            foreach (var dist in distances)
             {
-                map.DrawCircleOnMap(new PointLatLng(map.showLat, map.showLng), 2000 * i);
+                map.DrawCircleOnMap(new PointLatLng(map.showLat, map.showLng), dist);
             }
-            //map.App.Refresh();
         }
 
         private void OnMapZoomChanged()
