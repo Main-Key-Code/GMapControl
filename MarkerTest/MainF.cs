@@ -11,7 +11,6 @@ namespace MarkerTest
 
         public MainF()
         {
-            // 
             this.FormClosing += (s, e) =>
             {
                 if (map != null)
@@ -33,6 +32,14 @@ namespace MarkerTest
             // 위/경도 표시 레이블 추가
             // 위/경도 표시 레이블 추가
             map.App.Controls.Add(dynLabel = map.ShowLatLngLabel());
+
+            //36°07'14"N 125°58'24"E
+            // 범위 원 그리기
+            for (int i = 1; i < 5; i++)
+            {
+                map.DrawCircleOnMap(new PointLatLng(map.showLat, map.showLng), 2000 * i);
+            }
+            //map.App.Refresh();
         }
 
         private void OnMapZoomChanged()

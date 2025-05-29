@@ -17,18 +17,19 @@ namespace MarkerTest
 
         public MapControl(GMapControl app)
         {
-            this.App = app; 
+            this.App = app;
 
             //this.App.MapProvider = GMapProviders.OpenStreetMap;
-            this.App.MapProvider = GMapProviders.GoogleMap;
+            this.App.MapProvider = GMapProviders.TryGetProvider("GoogleMap") ?? GMapProviders.OpenStreetMap;
 
             this.App.MaxZoom = 20;
             this.App.MinZoom = 6;
 
             // 타일 구분 그리드 라인 및 위도 / 경도 표시
-            this.App.ShowTileGridLines = true;
-            this.App.Position = new GMap.NET.PointLatLng(37.678830, 126.779361);
-
+            this.App.ShowTileGridLines = false;
+            this.App.ShowCenter = true;
+            //this.App.Position = new GMap.NET.PointLatLng(37.678830, 126.779361);
+            this.App.Position = new GMap.NET.PointLatLng(36.121054, 125.973433);
             showLatLan();
 
             this.App.Zoom = 13;
@@ -208,6 +209,42 @@ namespace MarkerTest
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// 위도 / 경도 입력해서 이벤트 실행 
+        /// </summary>
+        /// <param name="center"></param>
+        /// <param name="radiusInMeters"></param>
+        public void DrawCircleOnMap(PointLatLng center, double radiusInMeters)
+        {
+            int segments = 36; // 원을 구성하는 점의 개수
+            List<PointLatLng> points = new List<PointLatLng>();
+
+            for (int i = 0; i < segments; i++)
+            {
+                double theta = 2.0 * Math.PI * i / segments; // 각도 계산
+                double dx = radiusInMeters * Math.Cos(theta); // 원의 x 좌표
+                double dy = radiusInMeters * Math.Sin(theta); // 원의 y 좌표
+
+                // 위도/경도 변환
+                double lat = center.Lat + (180 / Math.PI) * (dy / 6378137); // 6378137은 지구의 반지름(미터)
+                double lng = center.Lng + (180 / Math.PI) * (dx / 6378137) / Math.Cos(center.Lat * Math.PI / 180);
+
+                points.Add(new PointLatLng(lat, lng));
+            }
+
+            // GMapPolygon 생성
+            GMapPolygon circle = new GMapPolygon(points, "Circle")
+            {
+                Stroke = new Pen(Color.DarkGray, 2), // 테두리 색상과 두께
+                Fill = new SolidBrush(Color.FromArgb(0, Color.Red)) // 내부 색상 및 투명도
+            };
+
+            // 오버레이 추가
+            GMapOverlay overlay = new GMapOverlay("circleOverlay");
+            overlay.Polygons.Add(circle);
+            App.Overlays.Add(overlay);
         }
     }
 }
