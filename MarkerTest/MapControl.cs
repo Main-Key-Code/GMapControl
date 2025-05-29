@@ -1,14 +1,7 @@
-﻿using GMap.NET;
+using GMap.NET;
 using GMap.NET.MapProviders;
 using GMap.NET.WindowsForms;
 using GMap.NET.WindowsForms.Markers;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace MarkerTest
 {
@@ -17,15 +10,17 @@ namespace MarkerTest
         public GMapControl App;
         private GMapOverlay markerOverlay;
         private ContextMenuStrip contextMenu;
+        private ContextMenuStrip markerContextMenu; // 추가: 마커 전용 컨텍스트 메뉴
+        private GMapMarker lastRightClickedMarker;
 
         private PointLatLng lastRightClickLatLng;
 
         public MapControl(GMapControl app)
         {
-            this.App = app;
+            this.App = app; 
 
-            this.App.MapProvider = GMapProviders.OpenStreetMap;
-            //this.App.MapProvider = GMapProviders.GoogleMap;
+            //this.App.MapProvider = GMapProviders.OpenStreetMap;
+            this.App.MapProvider = GMapProviders.GoogleMap;
 
             this.App.MaxZoom = 20;
             this.App.MinZoom = 6;
@@ -42,6 +37,7 @@ namespace MarkerTest
             this.App.Overlays.Add(markerOverlay);
 
             InitializeContextMenu();
+            InitializeMarkerContextMenu(); // 마커 전용 메뉴 초기화
 
             this.App.MouseClick += (s, e) =>
             {
@@ -51,9 +47,20 @@ namespace MarkerTest
 
                 if (e.Button == MouseButtons.Right)
                 {
-                    // 오른쪽 클릭 시 컨텍스트 메뉴 표시
-                    lastRightClickLatLng = p;
-                    contextMenu.Show(App, e.Location);
+                    // 마커가 있는지 확인
+                    var marker = FindMarkerAt(e.Location);
+                    if (marker != null)
+                    {
+                        lastRightClickedMarker = marker;
+                        // 마커 전용 컨텍스트 메뉴 표시
+                        markerContextMenu.Show(App, e.Location);
+                    }
+                    else
+                    {
+                        // 마커가 없으면 컨텍스트 메뉴 표시
+                        lastRightClickLatLng = p;
+                        contextMenu.Show(App, e.Location);
+                    }
                 }
             };
         }
@@ -144,10 +151,7 @@ namespace MarkerTest
             };
 
             var clearMarkersItem = new ToolStripMenuItem("마커 모두 삭제");
-            clearMarkersItem.Click += (s, e) =>
-            {
-                markerOverlay.Markers.Clear();
-            };
+            clearMarkersItem.Click += (s, e) => { markerOverlay.Markers.Clear(); };
 
             contextMenu.Items.AddRange(new ToolStripItem[]
             {
@@ -155,6 +159,55 @@ namespace MarkerTest
                 addMarkerItem,
                 clearMarkersItem
             });
+        }
+
+        /// <summary>
+        /// 마커 전용 컨텍스트 메뉴 초기화
+        /// </summary>
+        private void InitializeMarkerContextMenu()
+        {
+            markerContextMenu = new ContextMenuStrip();
+
+            var deleteMarkerItem = new ToolStripMenuItem("마커 삭제");
+            deleteMarkerItem.Click += (s, e) =>
+            {
+                if (lastRightClickedMarker != null)
+                {
+                    var result = MessageBox.Show($"이 마커를 삭제하시겠습니까?\n{lastRightClickedMarker.ToolTipText}", "마커 삭제 확인", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        markerOverlay.Markers.Remove(lastRightClickedMarker);
+                    }
+
+                    lastRightClickedMarker = null;
+                }
+            };
+
+            markerContextMenu.Items.Add(deleteMarkerItem);
+        }
+
+        /// <summary>
+        /// 마우스 위치에 있는 마커 찾기
+        /// </summary>
+        private GMapMarker FindMarkerAt(Point mouseLocation)
+        {
+            foreach (var marker in markerOverlay.Markers)
+            {
+                // 마커의 화면 좌표 계산
+                var localPos = App.FromLatLngToLocal(marker.Position);
+
+                // 마커 이미지 크기(기본 32x32, 중심이 이미지 중앙)
+                var markerSize = marker is GMarkerGoogle gmg && gmg.Bitmap != null ? gmg.Bitmap.Size : new Size(32, 32);
+                var rect = new Rectangle((int)(localPos.X - markerSize.Width / 2), (int)(localPos.Y - markerSize.Height / 2), markerSize.Width, markerSize.Height);
+
+                if (rect.Contains(mouseLocation))
+                { 
+                    return marker;
+                }
+            }
+
+            return null;
         }
     }
 }
