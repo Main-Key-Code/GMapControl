@@ -21,7 +21,7 @@ namespace MarkerTest
 
             //this.App.MapProvider = GMapProviders.OpenStreetMap;
             //this.App.MapProvider = GMapProviders.TryGetProvider("GoogleMap") ?? GMapProviders.OpenStreetMap;
-            this.App.MapProvider = GMapProviders.TryGetProvider("OpenStreetMap") ?? GMapProviders.GoogleMap;
+             this.App.MapProvider = GMapProviders.TryGetProvider("OpenStreetMap") ?? GMapProviders.GoogleMap;
 
             this.App.MaxZoom = 20;
             this.App.MinZoom = 6;
@@ -98,6 +98,69 @@ namespace MarkerTest
             return label;
         }
 
+        /// <summary>
+        /// 지도 확대 축소 제어 패널 생성
+        /// </summary>
+        /// <returns></returns>
+        public Panel ShowTrackBarPanel()
+        {
+            Panel panel = new Panel();
+            //panel.BackColor = Color.Transparent;
+            panel.BackColor = Color.White;
+            panel.Size = new Size(45, 200);
+            panel.Location = new Point(20, 50); // 패널 위치 조정
+
+            return panel;
+        }
+
+        /// <summary>
+        /// 지도 확대 버튼 생성 (패널 상단에 위치)
+        /// </summary>
+        /// <returns></returns>
+        public Button TrackBarControlZoomIn()
+        {
+            Button zoomInButton = new Button();
+            zoomInButton.Text = "확대";
+            zoomInButton.Size = new Size(80, 30);
+            //zoomInButton.Location = new Point(10, 10);
+            zoomInButton.Dock = DockStyle.Top; // 패널 상단에 위치
+
+            zoomInButton.Click += (s, e) =>
+            {
+                if (App.Zoom < App.MaxZoom)
+                {
+                    App.Zoom++;
+                    showLatLan();
+                }
+            };
+            return zoomInButton;
+        }
+
+        /// <summary>
+        /// 지도 축소 버튼 생성 (패널 하단에 위치)
+        /// </summary>
+        /// <returns></returns>
+        public Button TrackBarControlZoomOut()
+        {
+            Button zoomOutButton = new Button();
+            zoomOutButton.Text = "축소";
+            zoomOutButton.Size = new Size(80, 30);
+            //zoomOutButton.Location = new Point(10, 30+50);
+            zoomOutButton.Dock = DockStyle.Bottom; // 패널 하단에 위치
+
+            zoomOutButton.Click += (s, e) =>
+            {
+                if (App.Zoom > App.MinZoom)
+                {
+                    App.Zoom--;
+                    showLatLan();
+                }
+            };
+            return zoomOutButton;
+        }
+
+
+
         public TrackBar ShowTrackBar()
         {
             TrackBar trackBar = new TrackBar();
@@ -106,6 +169,7 @@ namespace MarkerTest
             trackBar.Maximum = (int)App.MaxZoom;
             trackBar.Value = (int)App.Zoom;
             trackBar.TickStyle = TickStyle.Both;
+            trackBar.Dock = DockStyle.Fill;
 
             // 폼 크기 기준 5%로 동적 크기 설정
             SetTrackBarSizeAndPosition(trackBar, 3.0);
@@ -127,7 +191,6 @@ namespace MarkerTest
             int height = (int)(trackBar.Height * size);
             if (height < 30) height = 30; // 최소 높이 보장
             trackBar.Height = height;
-            trackBar.Width = 10; // 고정 너비로 설정
             trackBar.Left = 10;
             trackBar.Top = 10;
         }

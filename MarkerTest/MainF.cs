@@ -28,15 +28,20 @@ namespace MarkerTest
             map.App.Dock = DockStyle.Fill;
             this.Controls.Add(map.App);
 
-            // TrackBar 생성 및 설정
-            zoomTrackBar = new TrackBar();
-            zoomTrackBar.Orientation = Orientation.Vertical;
-            zoomTrackBar.Minimum = (int)map.App.MinZoom;
-            zoomTrackBar.Maximum = (int)map.App.MaxZoom;
-            zoomTrackBar.Value = (int)map.App.Zoom;
-            zoomTrackBar.TickStyle = TickStyle.Both;
+            //TrackBar Control Panel Create
+            Panel panel = map.ShowTrackBarPanel();
+            map.App.Controls.Add(panel);
 
-            map.App.Controls.Add(zoomTrackBar = map.ShowTrackBar()); // GMapControl의 Controls에 추가하여 TrackBar가 맵 위에 표시되도록 함
+            zoomTrackBar = map.ShowTrackBar();
+            zoomTrackBar.Parent = panel;
+
+            Button zoomInButton = map.TrackBarControlZoomIn();
+            zoomInButton.Parent = panel;
+
+            Button zoomOutButton = map.TrackBarControlZoomOut();
+            zoomOutButton.Parent = panel;
+
+
 
             map.App.OnMapZoomChanged += OnMapZoomChanged;
             map.App.OnPositionChanged += OnPositionChanged;
