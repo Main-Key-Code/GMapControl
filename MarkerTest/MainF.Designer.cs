@@ -1,4 +1,4 @@
-﻿namespace MarkerTest
+namespace MarkerTest
 {
     partial class MainF
     {

@@ -9,6 +9,8 @@ namespace MarkerTest
 
         Label dynLabel;
 
+        TrackBar zoomTrackBar; // TrackBar 추가
+
         public MainF()
         {
             this.FormClosing += (s, e) =>
@@ -26,6 +28,16 @@ namespace MarkerTest
             map.App.Dock = DockStyle.Fill;
             this.Controls.Add(map.App);
 
+            // TrackBar 생성 및 설정
+            zoomTrackBar = new TrackBar();
+            zoomTrackBar.Orientation = Orientation.Vertical;
+            zoomTrackBar.Minimum = (int)map.App.MinZoom;
+            zoomTrackBar.Maximum = (int)map.App.MaxZoom;
+            zoomTrackBar.Value = (int)map.App.Zoom;
+            zoomTrackBar.TickStyle = TickStyle.Both;
+
+            map.App.Controls.Add(zoomTrackBar = map.ShowTrackBar()); // GMapControl의 Controls에 추가하여 TrackBar가 맵 위에 표시되도록 함
+
             map.App.OnMapZoomChanged += OnMapZoomChanged;
             map.App.OnPositionChanged += OnPositionChanged;
 
@@ -39,12 +51,19 @@ namespace MarkerTest
             {
                 map.DrawCircleOnMap(new PointLatLng(map.showLat, map.showLng), dist);
             }
+            
+         
         }
+
+
 
         private void OnMapZoomChanged()
         {
             map.App.Position = new PointLatLng(map.showLat, map.showLng);
             dynLabel.Text = $"{map.showLat}:{map.showLng}";
+            // TrackBar와 동기화
+            if (zoomTrackBar.Value != (int)map.App.Zoom)
+                zoomTrackBar.Value = (int)map.App.Zoom;
         }
 
         private void OnPositionChanged(PointLatLng point)

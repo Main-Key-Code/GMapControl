@@ -98,6 +98,40 @@ namespace MarkerTest
             return label;
         }
 
+        public TrackBar ShowTrackBar()
+        {
+            TrackBar trackBar = new TrackBar();
+            trackBar.Orientation = Orientation.Vertical;
+            trackBar.Minimum = (int)App.MinZoom;
+            trackBar.Maximum = (int)App.MaxZoom;
+            trackBar.Value = (int)App.Zoom;
+            trackBar.TickStyle = TickStyle.Both;
+
+            // 폼 크기 기준 5%로 동적 크기 설정
+            SetTrackBarSizeAndPosition(trackBar, 3.0);
+
+            // 폼 리사이즈 시 TrackBar 크기 재조정
+            App.Resize += (s, e) => SetTrackBarSizeAndPosition(trackBar, 3.0);
+
+            trackBar.ValueChanged += (s, e) =>
+            {
+                if (App.Zoom != trackBar.Value)
+                    App.Zoom = trackBar.Value;
+            };
+
+            return trackBar;
+        }
+
+        private void SetTrackBarSizeAndPosition(TrackBar trackBar, double size)
+        {
+            int height = (int)(trackBar.Height * size);
+            if (height < 30) height = 30; // 최소 높이 보장
+            trackBar.Height = height;
+            trackBar.Width = 10; // 고정 너비로 설정
+            trackBar.Left = 10;
+            trackBar.Top = 10;
+        }
+
         /// <summary>
         /// 사용자 지정 이미지로 마커 추가 (이름 포함)
         /// </summary>
@@ -204,7 +238,7 @@ namespace MarkerTest
                 var rect = new Rectangle((int)(localPos.X - markerSize.Width / 2), (int)(localPos.Y - markerSize.Height / 2), markerSize.Width, markerSize.Height);
 
                 if (rect.Contains(mouseLocation))
-                { 
+                {
                     return marker;
                 }
             }
@@ -230,7 +264,7 @@ namespace MarkerTest
                 double lng = center.Lng + (radiusInMeters / (111320.0 * Math.Cos(center.Lat * Math.PI / 180.0))) * Math.Sin(theta);
                 points.Add(new PointLatLng(lat, lng));
             }
-            
+
             var color = Color.Silver;
 
             var polygon = new GMapPolygon(points, $"circle_{center.Lat}_{center.Lng}_{radiusInMeters}");
