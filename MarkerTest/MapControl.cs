@@ -95,6 +95,19 @@ namespace MarkerTest
 
             label.Text = $"{showLat} : {showLng}";
 
+            // 오른쪽 상단에 위치하도록 Location 설정
+            // GMapControl의 Width가 충분히 확보된 후 위치를 잡아야 하므로, Resize 이벤트로 동기화
+            void UpdateLabelPosition(object? sender, EventArgs? e)
+            {
+                if (App.Width > label.Width + 20)
+                    label.Location = new Point(App.Width - label.Width - 20, 10);
+                else
+                    label.Location = new Point(10, 10); // 너무 좁으면 왼쪽
+            }
+            App.Resize += UpdateLabelPosition;
+            label.SizeChanged += (s, e) => UpdateLabelPosition(null, null);
+            // 최초 위치 지정
+            UpdateLabelPosition(null, null);
             return label;
         }
 
@@ -108,7 +121,7 @@ namespace MarkerTest
             //panel.BackColor = Color.Transparent;
             panel.BackColor = Color.White;
             panel.Size = new Size(45, 200);
-            panel.Location = new Point(20, 50); // 패널 위치 조정
+            panel.Location = new Point(10, 70); // 패널 위치 조정
 
             return panel;
         }
@@ -159,8 +172,10 @@ namespace MarkerTest
             return zoomOutButton;
         }
 
-
-
+        /// <summary>
+        /// 지도 축소/확대 트랙바 생성
+        /// </summary>
+        /// <returns></returns>
         public TrackBar ShowTrackBar()
         {
             TrackBar trackBar = new TrackBar();
@@ -186,6 +201,11 @@ namespace MarkerTest
             return trackBar;
         }
 
+        /// <summary>
+        /// 트랙바 크기 및 위치 설정
+        /// </summary>
+        /// <param name="trackBar"></param>
+        /// <param name="size"></param>
         private void SetTrackBarSizeAndPosition(TrackBar trackBar, double size)
         {
             int height = (int)(trackBar.Height * size);
@@ -335,5 +355,26 @@ namespace MarkerTest
             polygon.Fill = new SolidBrush(Color.FromArgb(0, color));
             markerOverlay.Polygons.Add(polygon);
         }
-    }
+
+        public Panel ShowRightPanel()
+        {
+            Panel rightPanel = new Panel
+            {
+                Size = new Size(200, App.Height - 20), // 패널 높이를 폼 높이에 맞춤
+                BackColor = Color.LightGray
+            };
+
+            button MarkerButton = new Button
+            {
+                BackgroundImage = Image,
+                Dock = DockStyle.Top,
+                Height = 40
+            };
+
+
+
+
+
+            return rightPanel;
+        }
 }
