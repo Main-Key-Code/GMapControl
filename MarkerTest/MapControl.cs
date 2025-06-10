@@ -21,7 +21,7 @@ namespace MarkerTest
 
             //this.App.MapProvider = GMapProviders.OpenStreetMap;
             //this.App.MapProvider = GMapProviders.TryGetProvider("GoogleMap") ?? GMapProviders.OpenStreetMap;
-             this.App.MapProvider = GMapProviders.TryGetProvider("OpenStreetMap") ?? GMapProviders.GoogleMap;
+            this.App.MapProvider = GMapProviders.TryGetProvider("OpenStreetMap") ?? GMapProviders.GoogleMap;
 
             this.App.MaxZoom = 20;
             this.App.MinZoom = 6;
@@ -356,25 +356,7 @@ namespace MarkerTest
             markerOverlay.Polygons.Add(polygon);
         }
 
-        public Panel ShowRightPanel()
-        {
-            Panel rightPanel = new Panel
-            {
-                Size = new Size(200, App.Height - 20), // 패널 높이를 폼 높이에 맞춤
-                BackColor = Color.LightGray
-            };
-
-            button MarkerButton = new Button
-            {
-                BackgroundImage = Image,
-                Dock = DockStyle.Top,
-                Height = 40
-            };
 
 
-
-
-
-            return rightPanel;
-        }
+    }
 }
