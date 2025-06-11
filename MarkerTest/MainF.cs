@@ -59,6 +59,7 @@ namespace MarkerTest
                 map.DrawCircleOnMap(new PointLatLng(map.showLat, map.showLng), dist);
             }
 
+            // 방위표시용 PictureBox 추가
             PictureBox pictureBox = new PictureBox
             {
                 Image = Properties.Resources.compass,
@@ -69,6 +70,28 @@ namespace MarkerTest
             };
 
             map.App.Controls.Add(pictureBox);
+
+            // 오른쪽 선택 메뉴 추가
+            Panel pnlRight = map.ShowRightPanel();
+            map.App.Controls.Add(pnlRight);
+
+            int rightPanelTop = 70; // 오른쪽 패널의 상단 위치
+
+            int rightPanelLeft()
+            {
+                return (map.App.Width - pnlRight.Width) - 10; // 오른쪽 패널의 왼쪽 위치
+            }
+
+            // 패널 위치 설정
+            pnlRight.Location = new Point(rightPanelLeft(), rightPanelTop);
+
+            // Form 크기 조정 시 오른쪽 패널 위치 조정
+            map.App.Resize += (s, e) =>
+            {
+                pnlRight.Location = new Point(rightPanelLeft(), rightPanelTop);
+            };
+
+
 
 
 

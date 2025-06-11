@@ -2,6 +2,7 @@ using GMap.NET;
 using GMap.NET.MapProviders;
 using GMap.NET.WindowsForms;
 using GMap.NET.WindowsForms.Markers;
+using System.Windows.Forms;
 
 namespace MarkerTest
 {
@@ -14,6 +15,17 @@ namespace MarkerTest
         private GMapMarker lastRightClickedMarker;
 
         private PointLatLng lastRightClickLatLng;
+
+        private bool isDragMode = false;
+        private bool isDragging = false;
+        private Point dragStartPoint;
+        private PointLatLng dragStartPosition;
+
+        private bool isRectSelectMode = false;
+        private bool isRectSelecting = false;
+        private Point rectStartPoint;
+        private Point rectEndPoint;
+        private GMapPolygon? previewRectPolygon = null;
 
         public MapControl(GMapControl app)
         {
@@ -41,31 +53,164 @@ namespace MarkerTest
             InitializeContextMenu();
             InitializeMarkerContextMenu(); // 마커 전용 메뉴 초기화
 
-            this.App.MouseClick += (s, e) =>
+            this.App.MouseDown += (s, e) =>
             {
-                //if (e.Clicks > 1) { return; }
-
-                PointLatLng p = App.FromLocalToLatLng(e.X, e.Y);
-
-                if (e.Button == MouseButtons.Right)
+                if (isDragMode && e.Button == MouseButtons.Left)
                 {
-                    // 마커가 있는지 확인
-                    var marker = FindMarkerAt(e.Location);
-                    if (marker != null)
-                    {
-                        lastRightClickedMarker = marker;
-                        // 마커 전용 컨텍스트 메뉴 표시
-                        markerContextMenu.Show(App, e.Location);
-                    }
-                    else
-                    {
-                        // 마커가 없으면 컨텍스트 메뉴 표시
-                        lastRightClickLatLng = p;
-                        contextMenu.Show(App, e.Location);
-                    }
+                    isDragging = true;
+                    dragStartPoint = e.Location;
+                    dragStartPosition = App.Position;
+                    App.Cursor = Cursors.Hand;
+                }
+                else if (isRectSelectMode && e.Button == MouseButtons.Left)
+                {
+                    isRectSelecting = true;
+                    rectStartPoint = e.Location;
+                    rectEndPoint = e.Location;
+                    // 미리보기 사각형 초기화
+                    RemovePreviewRectPolygon();
+                }
+            };
+
+            this.App.MouseMove += (s, e) =>
+            {
+                if (isDragMode && isDragging && e.Button == MouseButtons.Left)
+                {
+                    // 이동 거리 계산
+                    PointLatLng current = App.FromLocalToLatLng(e.X, e.Y);
+                    PointLatLng start = App.FromLocalToLatLng(dragStartPoint.X, dragStartPoint.Y);
+
+                    double dLat = start.Lat - current.Lat;
+                    double dLng = start.Lng - current.Lng;
+
+                    App.Position = new PointLatLng(dragStartPosition.Lat + dLat, dragStartPosition.Lng + dLng);
+                    showLatLan();
+                }
+                else if (isRectSelectMode && isRectSelecting && e.Button == MouseButtons.Left)
+                {
+                    rectEndPoint = e.Location;
+                    DrawPreviewRectPolygon(rectStartPoint, rectEndPoint);
+                }
+            };
+
+            this.App.MouseUp += (s, e) =>
+            {
+                if (isDragMode && e.Button == MouseButtons.Left)
+                {
+                    isDragging = false;
+                    App.Cursor = Cursors.Default;
+                }
+                else if (isRectSelectMode && isRectSelecting && e.Button == MouseButtons.Left)
+                {
+                    isRectSelecting = false;
+                    rectEndPoint = e.Location;
+                    DrawFinalRectPolygon(rectStartPoint, rectEndPoint);
+                    RemovePreviewRectPolygon();
                 }
             };
         }
+
+        public Panel ShowRightPanel()
+        {
+
+            Panel rightPanel = new Panel();
+
+            rightPanel.BackColor = Color.DarkSlateGray;
+            rightPanel.Size = new Size(50, (App.Height / 2));   // Panel 크기 초기 설정
+
+            var images = new List<Bitmap>
+            {
+                Properties.Resources.cursor_24 ,
+                Properties.Resources.select_24,
+                Properties.Resources.pin_24,
+                Properties.Resources.ruler_24,
+                Properties.Resources.polygon_24,
+                Properties.Resources.empty_24,
+                Properties.Resources.home_24
+            };
+
+            var toolTips = new List<string>
+            {
+                "마우스 위치 표시",
+                "사각 영역 선택",
+                "마커 추가",
+                "거리 측정",
+                "다각형 영역 선택",
+                "지도 초기화",
+                "홈 위치로 이동"
+            };
+
+            int sizeButton = 30; // 버튼 크기
+
+            for (int i = 0; i < images.Count; i++)
+            {
+                Button button = new Button();
+                button.Size = new Size(sizeButton, sizeButton);
+                button.BackgroundImage = images[i];
+                button.BackgroundImageLayout = ImageLayout.Stretch;
+                button.FlatStyle = FlatStyle.Flat;
+                button.FlatAppearance.BorderSize = 0;
+                button.Location = new Point(0, i * sizeButton);
+                button.Tag = toolTips[i]; // 툴팁 텍스트 저장
+
+                // 툴팁 설정
+                ToolTip toolTip = new ToolTip();
+
+                toolTip.SetToolTip(button, toolTips[i]);
+
+                // 툴팁 글씨 크기 설정
+                toolTip.OwnerDraw = true;
+                toolTip.Draw += (sender, e) =>
+                {
+                    e.Graphics.FillRectangle(Brushes.White, e.Bounds);
+                    using (var font = new Font("맑은 고딕", 8))
+                    using (var brush = new SolidBrush(Color.Black))
+                    {
+                        e.Graphics.DrawString(e.ToolTipText, font, brush, new PointF(2, 2));
+                    }
+                };
+
+                //툴팁 글씨 크기에 맞춰서 Box 크기 조절
+                toolTip.Popup += (sender, e) =>
+                {
+                    var btn = e.AssociatedControl as Button;
+                    string currentToolTipText = btn?.Tag?.ToString() ?? "";
+
+                    using (var font = new Font("맑은 고딕", 8))
+                    {
+                        Size textSize = TextRenderer.MeasureText(currentToolTipText, font);
+                        e.ToolTipSize = new Size(textSize.Width + 4, textSize.Height + 4);
+                    }
+                };
+
+                // "cursor" 버튼 클릭 시 드래그 모드 활성화
+                if (i == 0) // 첫 번째 버튼이 cursor
+                {
+                    button.Click += (s, e) =>
+                    {
+                        isDragMode = true;
+                        isRectSelectMode = false;
+                    };
+                }
+
+                // "select" 버튼 클릭 시 사각형 선택 모드 활성화
+                if (i == 1) // 두 번째 버튼이 select
+                {
+                    button.Click += (s, e) =>
+                    {
+                        isDragMode = false;
+                        isRectSelectMode = true;
+                    };
+                }
+
+                rightPanel.Controls.Add(button);
+            }
+
+            rightPanel.Size = new Size(sizeButton, (images.Count * sizeButton));   // Panel 크기 버튼 갯수에 맞게 조정
+
+            return rightPanel;
+        }
+
 
         // 위/경도 표시 필드 추가
         public double showLat { set; get; }
@@ -356,7 +501,59 @@ namespace MarkerTest
             markerOverlay.Polygons.Add(polygon);
         }
 
+        /// <summary>
+        /// 사각형 미리보기 그리기
+        /// </summary>
+        private void DrawPreviewRectPolygon(Point start, Point end)
+        {
+            RemovePreviewRectPolygon();
 
+            var p1 = App.FromLocalToLatLng(start.X, start.Y);
+            var p2 = App.FromLocalToLatLng(end.X, start.Y);
+            var p3 = App.FromLocalToLatLng(end.X, end.Y);
+            var p4 = App.FromLocalToLatLng(start.X, end.Y);
 
+            var points = new List<PointLatLng> { p1, p2, p3, p4, p1 };
+            previewRectPolygon = new GMapPolygon(points, "previewRect")
+            {
+                Stroke = new Pen(Color.Red, 2),
+                Fill = new SolidBrush(Color.FromArgb(40, Color.Red))
+            };
+            markerOverlay.Polygons.Add(previewRectPolygon);
+            App.Refresh();
+        }
+
+        /// <summary>
+        /// 사각형 미리보기 제거
+        /// </summary>
+        private void RemovePreviewRectPolygon()
+        {
+            if (previewRectPolygon != null)
+            {
+                markerOverlay.Polygons.Remove(previewRectPolygon);
+                previewRectPolygon = null;
+                App.Refresh();
+            }
+        }
+
+        /// <summary>
+        /// 사각형 확정 그리기
+        /// </summary>
+        private void DrawFinalRectPolygon(Point start, Point end)
+        {
+            var p1 = App.FromLocalToLatLng(start.X, start.Y);
+            var p2 = App.FromLocalToLatLng(end.X, start.Y);
+            var p3 = App.FromLocalToLatLng(end.X, end.Y);
+            var p4 = App.FromLocalToLatLng(start.X, end.Y);
+
+            var points = new List<PointLatLng> { p1, p2, p3, p4, p1 };
+            var rectPolygon = new GMapPolygon(points, $"rect_{DateTime.Now.Ticks}")
+            {
+                Stroke = new Pen(Color.Blue, 2),
+                Fill = new SolidBrush(Color.FromArgb(40, Color.Blue))
+            };
+            markerOverlay.Polygons.Add(rectPolygon);
+            App.Refresh();
+        }
     }
 }
