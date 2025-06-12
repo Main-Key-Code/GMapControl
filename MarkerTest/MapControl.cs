@@ -3,6 +3,7 @@ using GMap.NET.MapProviders;
 using GMap.NET.WindowsForms;
 using GMap.NET.WindowsForms.Markers;
 using System.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
 
 namespace MarkerTest
 {
@@ -50,6 +51,8 @@ namespace MarkerTest
         {
             this.App = app;
 
+            this.App.DragButton = MouseButtons.None ; // 드래그 버튼 설정
+
             //this.App.MapProvider = GMapProviders.OpenStreetMap;
             //this.App.MapProvider = GMapProviders.TryGetProvider("GoogleMap") ?? GMapProviders.OpenStreetMap;
             this.App.MapProvider = GMapProviders.TryGetProvider("OpenStreetMap") ?? GMapProviders.GoogleMap;
@@ -72,24 +75,30 @@ namespace MarkerTest
             InitializeContextMenu();
             InitializeMarkerContextMenu(); // 마커 전용 메뉴 초기화
 
+            // 기존 MouseDown 핸들러 최적화
             this.App.MouseDown += (s, e) =>
             {
+                // 드래그 모드
                 if (isDragMode && e.Button == MouseButtons.Left)
                 {
                     isDragging = true;
                     dragStartPoint = e.Location;
                     dragStartPosition = App.Position;
                     App.Cursor = Cursors.Hand;
+                    return;
                 }
-                else if (isRectSelectMode && e.Button == MouseButtons.Left)
+
+                // 사각형 선택 모드
+                if (isRectSelectMode && e.Button == MouseButtons.Left)
                 {
                     isRectSelecting = true;
                     rectStartPoint = e.Location;
                     rectEndPoint = e.Location;
-                    // 미리보기 사각형 초기화
                     RemovePreviewRectPolygon();
+                    return;
                 }
-                // 마커 추가 모드: 지도 클릭 시 마커 추가
+
+                // 마커 추가 모드
                 if (isAddMarkerMode && e.Button == MouseButtons.Left)
                 {
                     var latlng = App.FromLocalToLatLng(e.X, e.Y);
@@ -98,98 +107,104 @@ namespace MarkerTest
                     {
                         AddCustomMarker(latlng.Lat, latlng.Lng, Properties.Resources.pin_24, markerName);
                     }
-                    // 마커 추가 후 모드 해제(원하면 유지 가능)
                     isAddMarkerMode = false;
                     App.Cursor = Cursors.Default;
                     return;
                 }
 
-                // ruler 모드: 첫 번째 클릭
-                if (isRulerMode && !isRulerDrawing && e.Button == MouseButtons.Left)
+                // ruler 모드
+                if (isRulerMode && e.Button == MouseButtons.Left)
                 {
-                    isRulerDrawing = true;
-                    rulerStartPoint = e.Location;
-                    rulerEndPoint = e.Location;
-                    RemovePreviewRulerRoute();
-                    return;
-                }
-                // ruler 모드: 두 번째 클릭
-                if (isRulerMode && isRulerDrawing && e.Button == MouseButtons.Left)
-                {
-                    rulerEndPoint = e.Location;
-                    DrawFinalRulerRoute(rulerStartPoint, rulerEndPoint);
-                    RemovePreviewRulerRoute();
-                    isRulerDrawing = false;
-                    // ruler 모드 유지 시 아래 두 줄 주석 처리
-                    isRulerMode = false;
-                    App.Cursor = Cursors.Default;
-                    return;
-                }
-
-                // polygon 모드: 왼쪽 클릭 시 점 추가
-                if (isPolygonMode && e.Button == MouseButtons.Left)
-                {
-                    var latlng = App.FromLocalToLatLng(e.X, e.Y);
-                    polygonPoints.Add(latlng);
-                    isPolygonDrawing = true;
-                    DrawPreviewPolygon();
+                    if (!isRulerDrawing)
+                    {
+                        isRulerDrawing = true;
+                        rulerStartPoint = e.Location;
+                        rulerEndPoint = e.Location;
+                        RemovePreviewRulerRoute();
+                    }
+                    else
+                    {
+                        rulerEndPoint = e.Location;
+                        DrawFinalRulerRoute(rulerStartPoint, rulerEndPoint);
+                        RemovePreviewRulerRoute();
+                        isRulerDrawing = false;
+                        isRulerMode = false;
+                        App.Cursor = Cursors.Default;
+                    }
                     return;
                 }
 
-                // polygon 모드: 오른쪽 클릭 시 다각형 확정
-                if (isPolygonMode && e.Button == MouseButtons.Right && isPolygonDrawing && polygonPoints.Count >= 3)
+                // polygon 모드
+                if (isPolygonMode)
                 {
-                    DrawFinalPolygon();
-                    isPolygonMode = false;
-                    isPolygonDrawing = false;
-                    polygonPoints.Clear();
-                    RemovePreviewPolygon();
-                    App.Cursor = Cursors.Default;
+                    if (e.Button == MouseButtons.Left)
+                    {
+                        var latlng = App.FromLocalToLatLng(e.X, e.Y);
+                        polygonPoints.Add(latlng);
+                        isPolygonDrawing = true;
+                        DrawPreviewPolygon();
+                        return;
+                    }
+                    if (e.Button == MouseButtons.Right && isPolygonDrawing && polygonPoints.Count >= 3)
+                    {
+                        DrawFinalPolygon();
+                        isPolygonMode = false;
+                        isPolygonDrawing = false;
+                        polygonPoints.Clear();
+                        RemovePreviewPolygon();
+                        App.Cursor = Cursors.Default;
+                        return;
+                    }
+                }
+
+                // 원 그리기 모드
+                if (isCircleMode && e.Button == MouseButtons.Left)
+                {
+                    if (!isCircleDrawing)
+                    {
+                        isCircleDrawing = true;
+                        circleStartPoint = e.Location;
+                        circleEndPoint = e.Location;
+                        RemovePreviewCirclePolygon();
+                    }
+                    else
+                    {
+                        circleEndPoint = e.Location;
+                        DrawFinalCirclePolygon(circleStartPoint, circleEndPoint);
+                        RemovePreviewCirclePolygon();
+                        isCircleDrawing = false;
+                        isCircleMode = false;
+                        App.Cursor = Cursors.Default;
+                    }
                     return;
                 }
 
-                // 원 그리기 모드: 시작점 지정
-                if (isCircleMode && !isCircleDrawing && e.Button == MouseButtons.Left)
-                {
-                    isCircleDrawing = true;
-                    circleStartPoint = e.Location;
-                    circleEndPoint = e.Location;
-                    RemovePreviewCirclePolygon();
-                    return;
-                }
-                // 원 그리기 모드: 드래그 끝(확정)
-                if (isCircleMode && isCircleDrawing && e.Button == MouseButtons.Left)
-                {
-                    circleEndPoint = e.Location;
-                    DrawFinalCirclePolygon(circleStartPoint, circleEndPoint);
-                    RemovePreviewCirclePolygon();
-                    isCircleDrawing = false;
-                    isCircleMode = false;
-                    App.Cursor = Cursors.Default;
-                    return;
-                }
-
-                // 마우스 오른쪽 버튼 클릭 시 폴리곤/루트 삭제
+                // 오른쪽 클릭: 폴리곤/루트 삭제
                 if (e.Button == MouseButtons.Right)
                 {
-                    // 폴리곤(사각형, 다각형, 원) 찾기
                     var polygon = FindPolygonAt(e.Location);
                     if (polygon != null)
                     {
-                        var result = MessageBox.Show("이 영역을 삭제하시겠습니까?", "영역 삭제", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                        if (result == DialogResult.Yes)
+                        isDragging = false;
+                        App.Cursor = Cursors.Default;
+
+                        if (MessageBox.Show("이 영역을 삭제하시겠습니까?", "영역 삭제", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                         {
                             markerOverlay.Polygons.Remove(polygon);
                             App.Refresh();
                         }
+
+                        
                         return;
                     }
-                    // 거리 측정(직선) 찾기
+
                     var route = FindRouteAt(e.Location);
                     if (route != null)
                     {
-                        var result = MessageBox.Show("이 선을 삭제하시겠습니까?", "선 삭제", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                        if (result == DialogResult.Yes)
+                        isDragging = false;
+                        App.Cursor = Cursors.Default;
+
+                        if (MessageBox.Show("이 선을 삭제하시겠습니까?", "선 삭제", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                         {
                             markerOverlay.Routes.Remove(route);
                             App.Refresh();
