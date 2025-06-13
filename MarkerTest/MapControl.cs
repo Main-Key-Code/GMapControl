@@ -185,8 +185,16 @@ namespace MarkerTest
                     var polygon = FindPolygonAt(e.Location);
                     if (polygon != null)
                     {
+                        if (polygon.Name.StartsWith("range_"))
+                        {
+                            return;
+                        }
+                        #region
+                        // Begin regi : 혹시 몰라서 드레그 모드 해제 : 코드 삭제해도 무방
                         isDragging = false;
                         App.Cursor = Cursors.Default;
+                        // End AA
+                        #endregion 
 
                         if (MessageBox.Show("이 영역을 삭제하시겠습니까?", "영역 삭제", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                         {
@@ -197,10 +205,12 @@ namespace MarkerTest
                         
                         return;
                     }
+                    
 
                     var route = FindRouteAt(e.Location);
                     if (route != null)
                     {
+                        // Begin  혹시 몰라서 드레그 모드 해제 : 코드 삭제해도 무방
                         isDragging = false;
                         App.Cursor = Cursors.Default;
 
@@ -745,10 +755,13 @@ namespace MarkerTest
 
             var color = Color.Silver;
 
-            var polygon = new GMapPolygon(points, $"circle_{center.Lat}_{center.Lng}_{radiusInMeters}");
+            //var polygon = new GMapPolygon(points, $"circle_{center.Lat}_{center.Lng}_{radiusInMeters}");
+            var polygon = new GMapPolygon(points, $"range_{center.Lat}_{center.Lng}_{radiusInMeters}");
             polygon.Stroke = new Pen(color, 2);
             polygon.Fill = new SolidBrush(Color.FromArgb(0, color));
             markerOverlay.Polygons.Add(polygon);
+
+            App.Refresh();
         }
 
         /// <summary>
@@ -965,7 +978,7 @@ namespace MarkerTest
                 points.Add(new PointLatLng(lat, lng));
             }
 
-            var polygon = new GMapPolygon(points, $"circle_{DateTime.Now.Ticks}")
+            var polygon = new GMapPolygon(points, $"range_{DateTime.Now.Ticks}")
             {
                 Stroke = new Pen(Color.Green, 2),
                 Fill = new SolidBrush(Color.FromArgb(40, Color.Green))
