@@ -51,6 +51,7 @@ namespace MarkerTest
         {
             this.App = app;
 
+            this.App.TabStop = false; // TabStop 설정
             this.App.DragButton = MouseButtons.None ; // 드래그 버튼 설정
 
             //this.App.MapProvider = GMapProviders.OpenStreetMap;
