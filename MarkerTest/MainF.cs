@@ -91,13 +91,8 @@ namespace MarkerTest
                 pnlRight.Location = new Point(rightPanelLeft(), rightPanelTop);
             };
 
-
-
-
-
+            rotationangle();
         }
-
-
 
         private void OnMapZoomChanged()
         {
@@ -113,6 +108,22 @@ namespace MarkerTest
             map.showLatLan();
             dynLabel.Text = $"{map.showLat}:{map.showLng}";
         }
+
+        public async Task rotationangle()
+        {
+            int rotation = 0;
+            while (true)
+            {
+                map.DeleteOverlay("SemiCircle");
+
+                rotation = rotation > 360 ? 0 : rotation;
+
+                map.DrawSemiCircle(new PointLatLng(36.121054, 125.973433), 2000 * 16, rotation, rotation + 15);
+                rotation += 15;
+                await Task.Delay(200);
+            }
+        }
+
 
     }
 }

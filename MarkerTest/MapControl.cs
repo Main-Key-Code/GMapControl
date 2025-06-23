@@ -66,6 +66,7 @@ namespace MarkerTest
             this.App.ShowCenter = true;
             //this.App.Position = new GMap.NET.PointLatLng(37.678830, 126.779361);
             this.App.Position = new GMap.NET.PointLatLng(36.121054, 125.973433);
+
             showLatLan();
 
             this.App.Zoom = 13;
@@ -190,11 +191,12 @@ namespace MarkerTest
                         {
                             return;
                         }
-                        #region
-                        // Begin regi : 혹시 몰라서 드레그 모드 해제 : 코드 삭제해도 무방
+
+                        #region 혹시 몰라서 드레그 모드 해제 : 코드 삭제해도 무방
+                        
                         isDragging = false;
                         App.Cursor = Cursors.Default;
-                        // End AA
+                        
                         #endregion 
 
                         if (MessageBox.Show("이 영역을 삭제하시겠습니까?", "영역 삭제", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
@@ -1050,6 +1052,85 @@ namespace MarkerTest
             t = Math.Max(0, Math.Min(1, t));
             double cx = ax + t * dx, cy = ay + t * dy;
             return Math.Sqrt((px - cx) * (px - cx) + (py - cy) * (py - cy));
+        }
+
+        // GMapOverlay 객체를 저장
+        GMapOverlay semiCircleoverlay;
+
+        public void DrawSemiCircle(PointLatLng center, double radius, double startAngle, double endAngle)
+        {
+            // azimuth
+            List<PointLatLng> points = new List<PointLatLng>();
+            points.Add(center);
+
+            int segments = 36; // 점 개수
+            for (int i = 0; i <= segments; i++)
+            {
+                double angle = startAngle + (endAngle - startAngle) * i / segments;
+                double angleRad = angle * Math.PI / 180;
+
+                double latOffset = (radius / 6378137) * Math.Cos(angleRad);
+                double lngOffset = (radius / 6378137) * Math.Sin(angleRad) / Math.Cos(center.Lat * Math.PI / 180);
+
+                double pointLat = center.Lat + (latOffset * 180 / Math.PI);
+                double pointLng = center.Lng + (lngOffset * 180 / Math.PI);
+
+                points.Add(new PointLatLng(pointLat, pointLng));
+            }
+
+            GMapPolygon semiCirclePolygon = new GMapPolygon(points, "SemiCircle")
+            {
+                Stroke = new Pen(Color.Blue, 1),
+                Fill = new SolidBrush(Color.FromArgb(50, Color.Blue))
+            };
+
+
+            if (semiCircleoverlay != null)
+            {
+                App.Overlays.Remove(semiCircleoverlay);
+            }
+
+            if (semiCircleoverlay == null)
+            {
+                semiCircleoverlay = new GMapOverlay();
+            }
+
+            semiCircleoverlay.Polygons.Add(semiCirclePolygon);
+
+            this.App.Overlays.Add(semiCircleoverlay);
+
+            this.App.Refresh(); // 지도 새로고침
+
+        }
+
+        // 특정 반원 삭제
+        public void DeleteOverlay(string overlayName)
+        {
+            var overlayToRemove = FindOverlay(semiCircleoverlay, overlayName);
+
+            if (overlayToRemove != null)
+            {
+                semiCircleoverlay.Polygons.Remove(overlayToRemove);
+
+                App.Update();
+                App.Refresh(); // 지도 새로고침
+            }
+        }
+
+        /// <summary>
+        /// 오버레이 찾기
+        /// </summary>
+        /// <param name="over"></param>
+        /// <param name="Name"></param>
+        /// <returns></returns>
+        public GMapPolygon FindOverlay(GMapOverlay over, string Name)
+        {
+            if (over == null)
+            {
+                return null;
+            }
+
+            return over.Polygons.FirstOrDefault(p => p.Name == Name);
         }
     }
 }
